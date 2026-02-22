@@ -65,6 +65,31 @@ export function MarketingLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="flex-1">{children}</main>
+
+      <footer className="border-t border-gray-100 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 signature-gradient rounded-lg flex items-center justify-center">
+              <BrainCircuit className="text-white" size={18} />
+            </div>
+            <span className="text-lg font-display font-bold tracking-tight">
+              FinModel<span className="signature-text">.ai</span>
+            </span>
+          </Link>
+
+          <nav className="flex items-center gap-6 text-sm text-gray-500">
+            {navLinks.map(({ to, label }) => (
+              <Link key={to} to={to} className="hover:text-[#111827] transition-colors">
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} FinModel.ai. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
