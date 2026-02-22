@@ -3,114 +3,119 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import Database from "better-sqlite3";
 import { generateInsights, simulateDecision } from "./server/gemini";
 import { HttpError, BadRequestError, UnauthorizedError } from "./server/errors";
 import { API, validationErrorResponse } from "./server/api-routes";
 import * as auth from "./server/auth";
+import { getDb, initSchema } from "./server/db";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database(process.env.DATABASE_PATH || "finmodel.db");
+async function seed(db: ReturnType<typeof getDb>) {
+  // Financial data: 6 months, deterministic for reproducible seed
+  const financialCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM financial_data"))!;
+  if (Number(financialCount.count) === 0) {
+    const months = [
+      { month: "2025-09", revenue: 12500, expenses: 42000 },
+      { month: "2025-10", revenue: 18200, expenses: 43500 },
+      { month: "2025-11", revenue: 21500, expenses: 44800 },
+      { month: "2025-12", revenue: 26800, expenses: 46200 },
+      { month: "2026-01", revenue: 30200, expenses: 44100 },
+      { month: "2026-02", revenue: 31800, expenses: 45500 },
+    ];
+    let cash = 500000;
+    for (const row of months) {
+      cash = cash + row.revenue - row.expenses;
+      await db.run(
+        "INSERT INTO financial_data (month, revenue, expenses, cash_on_hand, category) VALUES ($1, $2, $3, $4, $5)",
+        [row.month, row.revenue, row.expenses, cash, "operating"]
+      );
+    }
+  }
 
-// Initialize Database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS financial_data (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    month TEXT NOT NULL,
-    revenue REAL DEFAULT 0,
-    expenses REAL DEFAULT 0,
-    cash_on_hand REAL DEFAULT 0,
-    category TEXT
-  );
+  // Agents
+  const agentCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM agents"))!;
+  if (Number(agentCount.count) === 0) {
+    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["Financial analyst", "analyst", "active"]);
+    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["CFO agent", "cfo", "active"]);
+    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["Forecasting agent", "forecasting", "idle"]);
+  }
 
-  CREATE TABLE IF NOT EXISTS decisions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    decision_text TEXT NOT NULL,
-    context TEXT,
-    expected_outcome TEXT,
-    actual_outcome TEXT,
-    status TEXT DEFAULT 'pending'
-  );
+  // Demo user
+  const userCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM users"))!;
+  if (Number(userCount.count) === 0) {
+    const hash = auth.hashPassword("demo123");
+    await db.run("INSERT INTO users (email, password_hash) VALUES ($1, $2)", ["demo@finmodel.ai", hash]);
+  }
 
-  CREATE TABLE IF NOT EXISTS agent_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    agent_name TEXT NOT NULL,
-    action TEXT NOT NULL,
-    recommendation TEXT,
-    impact_score REAL
-  );
+  // Sample decisions
+  const decisionsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM decisions"))!;
+  if (Number(decisionsCount.count) === 0) {
+    const decisions = [
+      { decision_text: "Increase marketing spend by 15% in Q1", context: "Strong pipeline, need brand awareness", expected_outcome: "Higher lead volume" },
+      { decision_text: "Hire two additional engineers", context: "Product backlog growing", expected_outcome: "Faster feature delivery" },
+      { decision_text: "Negotiate extended payment terms with key supplier", context: "Cash flow optimization", expected_outcome: "Improved runway" },
+    ];
+    for (const d of decisions) {
+      await db.run(
+        "INSERT INTO decisions (decision_text, context, expected_outcome, status) VALUES ($1, $2, $3, $4) RETURNING id",
+        [d.decision_text, d.context, d.expected_outcome, "pending"]
+      );
+    }
+  }
 
-  CREATE TABLE IF NOT EXISTS models (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    version TEXT NOT NULL DEFAULT '1',
-    config TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+  // Sample agent logs
+  const agentLogsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM agent_logs"))!;
+  if (Number(agentLogsCount.count) === 0) {
+    const logs = [
+      { agent_name: "Financial analyst", action: "Reviewed monthly P&L", recommendation: "Consider reducing discretionary spend in Q2", impact_score: 0.7 },
+      { agent_name: "CFO agent", action: "Cash flow forecast updated", recommendation: "Maintain 6-month runway buffer", impact_score: 0.9 },
+      { agent_name: "Forecasting agent", action: "Revenue model recalibrated", recommendation: "Revise Q3 targets upward by 8%", impact_score: 0.6 },
+    ];
+    for (const log of logs) {
+      await db.run(
+        "INSERT INTO agent_logs (agent_name, action, recommendation, impact_score) VALUES ($1, $2, $3, $4) RETURNING id",
+        [log.agent_name, log.action, log.recommendation, log.impact_score]
+      );
+    }
+  }
 
-  CREATE TABLE IF NOT EXISTS agents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    type TEXT NOT NULL,
-    config TEXT,
-    status TEXT NOT NULL DEFAULT 'idle',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+  // Sample models
+  const modelsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM models"))!;
+  if (Number(modelsCount.count) === 0) {
+    await db.run(
+      "INSERT INTO models (name, version, config) VALUES ($1, $2, $3) RETURNING id",
+      ["Revenue forecast v1", "1", JSON.stringify({ horizon_months: 12, method: "linear" })]
+    );
+    await db.run(
+      "INSERT INTO models (name, version, config) VALUES ($1, $2, $3) RETURNING id",
+      ["Expense model", "1", JSON.stringify({ categories: ["payroll", "ops", "marketing"] })]
+    );
+  }
 
-  CREATE TABLE IF NOT EXISTS integrations (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    provider TEXT NOT NULL,
-    type TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'disconnected',
-    config TEXT,
-    last_sync_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// Seed initial data if empty
-const rowCount = db.prepare("SELECT COUNT(*) as count FROM financial_data").get() as { count: number };
-if (rowCount.count === 0) {
-  const months = ["2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02"];
-  const insert = db.prepare("INSERT INTO financial_data (month, revenue, expenses, cash_on_hand) VALUES (?, ?, ?, ?)");
-  let cash = 500000;
-  months.forEach((m, i) => {
-    const rev = 10000 + i * 5000 + Math.random() * 2000;
-    const exp = 40000 + Math.random() * 5000;
-    cash = cash + rev - exp;
-    insert.run(m, rev, exp, cash);
-  });
-}
-
-const agentCount = db.prepare("SELECT COUNT(*) as count FROM agents").get() as { count: number };
-if (agentCount.count === 0) {
-  const insertAgent = db.prepare("INSERT INTO agents (name, type, status) VALUES (?, ?, ?)");
-  insertAgent.run("Financial analyst", "analyst", "active");
-  insertAgent.run("CFO agent", "cfo", "active");
-  insertAgent.run("Forecasting agent", "forecasting", "idle");
-}
-
-const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as { count: number };
-if (userCount.count === 0) {
-  const hash = auth.hashPassword("demo123");
-  db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)").run("demo@finmodel.ai", hash);
+  // Sample integrations
+  const integrationsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM integrations"))!;
+  if (Number(integrationsCount.count) === 0) {
+    const integrations = [
+      { provider: "QuickBooks", type: "accounting", status: "disconnected" },
+      { provider: "Stripe", type: "payments", status: "disconnected" },
+      { provider: "Xero", type: "accounting", status: "disconnected" },
+    ];
+    for (const i of integrations) {
+      await db.run(
+        "INSERT INTO integrations (provider, type, status) VALUES ($1, $2, $3) RETURNING id",
+        [i.provider, i.type, i.status]
+      );
+    }
+  }
 }
 
 async function startServer() {
+  await initSchema();
+  const db = getDb();
+  await seed(db);
+
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
@@ -128,10 +133,9 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Routes
-  app.get(API.financials, (_req, res) => {
+  app.get(API.financials, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM financial_data ORDER BY month ASC").all();
+      const data = await db.all("SELECT * FROM financial_data ORDER BY month ASC");
       res.json(data);
     } catch (err) {
       console.error("GET /api/financials:", err);
@@ -139,9 +143,9 @@ async function startServer() {
     }
   });
 
-  app.get(API.decisions, (_req, res) => {
+  app.get(API.decisions, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM decisions ORDER BY timestamp DESC").all();
+      const data = await db.all("SELECT * FROM decisions ORDER BY timestamp DESC");
       res.json(data);
     } catch (err) {
       console.error("GET /api/decisions:", err);
@@ -149,14 +153,16 @@ async function startServer() {
     }
   });
 
-  app.post(API.decisions, (req, res) => {
+  app.post(API.decisions, async (req, res) => {
     try {
       const { decision_text, context, expected_outcome } = req.body ?? {};
       if (!decision_text || typeof decision_text !== "string") {
         return res.status(400).json(validationErrorResponse("decision_text is required", "decision_text"));
       }
-      const info = db.prepare("INSERT INTO decisions (decision_text, context, expected_outcome) VALUES (?, ?, ?)")
-        .run(decision_text, context ?? null, expected_outcome ?? null);
+      const info = await db.run(
+        "INSERT INTO decisions (decision_text, context, expected_outcome) VALUES ($1, $2, $3) RETURNING id",
+        [decision_text, context ?? null, expected_outcome ?? null]
+      );
       broadcast("refresh", { source: "decisions" });
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
@@ -165,9 +171,9 @@ async function startServer() {
     }
   });
 
-  app.get(API.agentLogs, (_req, res) => {
+  app.get(API.agentLogs, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM agent_logs ORDER BY timestamp DESC LIMIT 50").all();
+      const data = await db.all("SELECT * FROM agent_logs ORDER BY timestamp DESC LIMIT 50");
       res.json(data);
     } catch (err) {
       console.error("GET /api/agent-logs:", err);
@@ -175,7 +181,7 @@ async function startServer() {
     }
   });
 
-  app.post(API.agentLogs, (req, res) => {
+  app.post(API.agentLogs, async (req, res) => {
     try {
       const { agent_name, action, recommendation, impact_score } = req.body ?? {};
       if (!agent_name || typeof agent_name !== "string") {
@@ -184,8 +190,10 @@ async function startServer() {
       if (!action || typeof action !== "string") {
         return res.status(400).json(validationErrorResponse("action is required", "action"));
       }
-      const info = db.prepare("INSERT INTO agent_logs (agent_name, action, recommendation, impact_score) VALUES (?, ?, ?, ?)")
-        .run(agent_name, action, recommendation ?? null, impact_score ?? null);
+      const info = await db.run(
+        "INSERT INTO agent_logs (agent_name, action, recommendation, impact_score) VALUES ($1, $2, $3, $4) RETURNING id",
+        [agent_name, action, recommendation ?? null, impact_score ?? null]
+      );
       broadcast("refresh", { source: "agent_logs" });
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
@@ -230,9 +238,9 @@ async function startServer() {
     }
   });
 
-  app.get(API.models, (_req, res) => {
+  app.get(API.models, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM models ORDER BY updated_at DESC").all();
+      const data = await db.all("SELECT * FROM models ORDER BY updated_at DESC");
       res.json(data);
     } catch (err) {
       console.error("GET", API.models, err);
@@ -240,14 +248,16 @@ async function startServer() {
     }
   });
 
-  app.post(API.models, (req, res) => {
+  app.post(API.models, async (req, res) => {
     try {
       const { name, version, config } = req.body ?? {};
       if (!name || typeof name !== "string") {
         return res.status(400).json(validationErrorResponse("name is required", "name"));
       }
-      const info = db.prepare("INSERT INTO models (name, version, config) VALUES (?, ?, ?)")
-        .run(name, version ?? "1", config ?? null);
+      const info = await db.run(
+        "INSERT INTO models (name, version, config) VALUES ($1, $2, $3) RETURNING id",
+        [name, version ?? "1", config ?? null]
+      );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
       console.error("POST", API.models, err);
@@ -255,9 +265,9 @@ async function startServer() {
     }
   });
 
-  app.get(API.agents, (_req, res) => {
+  app.get(API.agents, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM agents ORDER BY name ASC").all();
+      const data = await db.all("SELECT * FROM agents ORDER BY name ASC");
       res.json(data);
     } catch (err) {
       console.error("GET", API.agents, err);
@@ -265,7 +275,7 @@ async function startServer() {
     }
   });
 
-  app.post(API.agents, (req, res) => {
+  app.post(API.agents, async (req, res) => {
     try {
       const { name, type, config, status } = req.body ?? {};
       if (!name || typeof name !== "string") {
@@ -274,8 +284,10 @@ async function startServer() {
       if (!type || typeof type !== "string") {
         return res.status(400).json(validationErrorResponse("type is required", "type"));
       }
-      const info = db.prepare("INSERT INTO agents (name, type, config, status) VALUES (?, ?, ?, ?)")
-        .run(name, type, config ?? null, status ?? "idle");
+      const info = await db.run(
+        "INSERT INTO agents (name, type, config, status) VALUES ($1, $2, $3, $4) RETURNING id",
+        [name, type, config ?? null, status ?? "idle"]
+      );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
       console.error("POST", API.agents, err);
@@ -283,9 +295,9 @@ async function startServer() {
     }
   });
 
-  app.get(API.integrations, (_req, res) => {
+  app.get(API.integrations, async (_req, res) => {
     try {
-      const data = db.prepare("SELECT * FROM integrations ORDER BY provider ASC").all();
+      const data = await db.all("SELECT * FROM integrations ORDER BY provider ASC");
       res.json(data);
     } catch (err) {
       console.error("GET", API.integrations, err);
@@ -293,7 +305,7 @@ async function startServer() {
     }
   });
 
-  app.post(API.integrations, (req, res) => {
+  app.post(API.integrations, async (req, res) => {
     try {
       const { provider, type, config, status } = req.body ?? {};
       if (!provider || typeof provider !== "string") {
@@ -302,8 +314,10 @@ async function startServer() {
       if (!type || typeof type !== "string") {
         return res.status(400).json(validationErrorResponse("type is required", "type"));
       }
-      const info = db.prepare("INSERT INTO integrations (provider, type, config, status) VALUES (?, ?, ?, ?)")
-        .run(provider, type, config ?? null, status ?? "disconnected");
+      const info = await db.run(
+        "INSERT INTO integrations (provider, type, config, status) VALUES ($1, $2, $3, $4) RETURNING id",
+        [provider, type, config ?? null, status ?? "disconnected"]
+      );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
       console.error("POST", API.integrations, err);
@@ -327,15 +341,16 @@ async function startServer() {
     }
   });
 
-  app.post(API.login, (req, res) => {
+  app.post(API.login, async (req, res) => {
     try {
       const { email, password } = req.body ?? {};
       if (!email || typeof email !== "string" || !password || typeof password !== "string") {
         return res.status(400).json(validationErrorResponse("email and password are required"));
       }
-      const row = db.prepare("SELECT id, email, password_hash FROM users WHERE email = ?").get(email) as
-        | { id: number; email: string; password_hash: string }
-        | undefined;
+      const row = await db.get<{ id: number; email: string; password_hash: string }>(
+        "SELECT id, email, password_hash FROM users WHERE email = $1",
+        [email]
+      );
       if (!row || !auth.verifyPassword(password, row.password_hash)) {
         throw UnauthorizedError("Invalid email or password");
       }
@@ -371,7 +386,6 @@ async function startServer() {
     });
   });
 
-  // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
