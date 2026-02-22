@@ -43,6 +43,7 @@ export function ChatWidget() {
       const res = await fetch(API.chat, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           messages: [...messages, userMessage].map((m) => ({ role: m.role, content: m.content })),
         }),

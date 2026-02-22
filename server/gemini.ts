@@ -23,6 +23,7 @@ export async function generateInsights(data: FinancialMetric[]) {
     Focus on burn rate, runway, and revenue growth.
     Format the response as JSON with "insights" (array of strings) and "recommendations" (array of objects with "title" and "description").
   `;
+  try {
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
     contents: prompt,
@@ -47,6 +48,13 @@ export async function generateInsights(data: FinancialMetric[]) {
     },
   });
   return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("[gemini] generateInsights failed:", err);
+    return {
+      insights: ["AI insights are temporarily unavailable. Please try again later."],
+      recommendations: [{ title: "Retry", description: "The AI service may be busy. Try again in a moment." }],
+    };
+  }
 }
 
 export async function simulateDecision(decision: string, currentData: FinancialMetric[]) {
@@ -63,6 +71,7 @@ export async function simulateDecision(decision: string, currentData: FinancialM
     Predict the impact on: 1. Runway (months) 2. Revenue Trajectory 3. Profitability Date
     Provide a probabilistic forecast (Best case, Worst case, Expected). Format as JSON.
   `;
+  try {
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
     contents: prompt,
@@ -96,6 +105,14 @@ export async function simulateDecision(decision: string, currentData: FinancialM
     },
   });
   return JSON.parse(response.text || "{}");
+  } catch (err) {
+    console.error("[gemini] simulateDecision failed:", err);
+    return {
+      summary: "Simulation is temporarily unavailable. Please try again later.",
+      impacts: { runway: "—", revenue: "—", profitability: "—" },
+      simulations: [],
+    };
+  }
 }
 
 const PLATFORM_SYSTEM_PROMPT = `You are the friendly in-app assistant for FinModel.ai, a financial intelligence platform for startups. Your role is to:
@@ -114,9 +131,14 @@ export async function chat(messages: ChatMessage[]): Promise<string> {
       .map((m) => (m.role === "user" ? `User: ${m.content}` : `Assistant: ${m.content}`))
       .join("\n\n") + "\n\nAssistant: ";
   const prompt = `${PLATFORM_SYSTEM_PROMPT}\n\n---\n\n${conversation}`;
+  try {
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
     contents: prompt,
   });
   return (response.text || "").trim();
+  } catch (err) {
+    console.error("[gemini] chat failed:", err);
+    return "I'm sorry, the assistant is temporarily unavailable. Please try again in a moment.";
+  }
 }

@@ -73,9 +73,9 @@ export default function AppDashboard() {
   const fetchData = async () => {
     try {
       const [finRes, logRes, decRes] = await Promise.all([
-        fetch(API.financials),
-        fetch(API.agentLogs),
-        fetch(API.decisions)
+        fetch(API.financials, { credentials: "include" }),
+        fetch(API.agentLogs, { credentials: "include" }),
+        fetch(API.decisions, { credentials: "include" }),
       ]);
       const finData = await finRes.json();
       const logData = await logRes.json();
@@ -115,6 +115,7 @@ export default function AppDashboard() {
       await fetch(API.agentLogs, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           agent_name: 'Forecasting Agent',
           action: 'Decision Simulation',

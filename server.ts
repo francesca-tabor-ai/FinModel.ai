@@ -9,124 +9,10 @@ import { HttpError, BadRequestError, UnauthorizedError } from "./server/errors";
 import { API, validationErrorResponse } from "./server/api-routes";
 import * as auth from "./server/auth";
 import { getDb, initSchema } from "./server/db";
+import { seed } from "./server/seed";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export async function seed(db: ReturnType<typeof getDb>) {
-  // Financial data: 12 months, deterministic for reproducible seed
-  const financialCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM financial_data"))!;
-  if (Number(financialCount.count) === 0) {
-    const months = [
-      { month: "2025-03", revenue: 9800, expenses: 40500, category: "operating" },
-      { month: "2025-04", revenue: 11200, expenses: 41200, category: "operating" },
-      { month: "2025-05", revenue: 12500, expenses: 42000, category: "operating" },
-      { month: "2025-06", revenue: 14800, expenses: 42800, category: "operating" },
-      { month: "2025-07", revenue: 16200, expenses: 43200, category: "operating" },
-      { month: "2025-08", revenue: 18200, expenses: 43500, category: "operating" },
-      { month: "2025-09", revenue: 21500, expenses: 44800, category: "operating" },
-      { month: "2025-10", revenue: 24800, expenses: 45500, category: "operating" },
-      { month: "2025-11", revenue: 26800, expenses: 46200, category: "operating" },
-      { month: "2025-12", revenue: 30200, expenses: 44100, category: "operating" },
-      { month: "2026-01", revenue: 31800, expenses: 45500, category: "operating" },
-      { month: "2026-02", revenue: 33500, expenses: 46800, category: "operating" },
-    ];
-    let cash = 500000;
-    for (const row of months) {
-      cash = cash + row.revenue - row.expenses;
-      await db.run(
-        "INSERT INTO financial_data (month, revenue, expenses, cash_on_hand, category) VALUES ($1, $2, $3, $4, $5)",
-        [row.month, row.revenue, row.expenses, cash, row.category]
-      );
-    }
-  }
-
-  // Agents
-  const agentCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM agents"))!;
-  if (Number(agentCount.count) === 0) {
-    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["Financial analyst", "analyst", "active"]);
-    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["CFO agent", "cfo", "active"]);
-    await db.run("INSERT INTO agents (name, type, status) VALUES ($1, $2, $3)", ["Forecasting agent", "forecasting", "idle"]);
-  }
-
-  // Demo user
-  const userCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM users"))!;
-  if (Number(userCount.count) === 0) {
-    const hash = auth.hashPassword("demo123");
-    await db.run("INSERT INTO users (email, password_hash) VALUES ($1, $2)", ["demo@finmodel.ai", hash]);
-  }
-
-  // Sample decisions
-  const decisionsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM decisions"))!;
-  if (Number(decisionsCount.count) === 0) {
-    const decisions = [
-      { decision_text: "Increase marketing spend by 15% in Q1", context: "Strong pipeline, need brand awareness", expected_outcome: "Higher lead volume", status: "pending" as const },
-      { decision_text: "Hire two additional engineers", context: "Product backlog growing", expected_outcome: "Faster feature delivery", status: "pending" as const },
-      { decision_text: "Negotiate extended payment terms with key supplier", context: "Cash flow optimization", expected_outcome: "Improved runway", status: "pending" as const },
-      { decision_text: "Launch paid tier for SMB segment", context: "Product-market fit validated", expected_outcome: "Recurring revenue growth", status: "pending" as const },
-      { decision_text: "Consolidate cloud providers to reduce spend", context: "Current spend 40% above benchmark", expected_outcome: "15–20% infra cost reduction", status: "pending" as const },
-      { decision_text: "Open second sales region (EMEA)", context: "Demand from EU prospects", expected_outcome: "New pipeline within 2 quarters", status: "pending" as const },
-    ];
-    for (const d of decisions) {
-      await db.run(
-        "INSERT INTO decisions (decision_text, context, expected_outcome, status) VALUES ($1, $2, $3, $4) RETURNING id",
-        [d.decision_text, d.context, d.expected_outcome, d.status]
-      );
-    }
-  }
-
-  // Sample agent logs
-  const agentLogsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM agent_logs"))!;
-  if (Number(agentLogsCount.count) === 0) {
-    const logs = [
-      { agent_name: "Financial analyst", action: "Reviewed monthly P&L", recommendation: "Consider reducing discretionary spend in Q2", impact_score: 0.7 },
-      { agent_name: "CFO agent", action: "Cash flow forecast updated", recommendation: "Maintain 6-month runway buffer", impact_score: 0.9 },
-      { agent_name: "Forecasting agent", action: "Revenue model recalibrated", recommendation: "Revise Q3 targets upward by 8%", impact_score: 0.6 },
-      { agent_name: "Financial analyst", action: "Variance analysis (actual vs budget)", recommendation: "Investigate 12% overspend in marketing", impact_score: 0.8 },
-      { agent_name: "CFO agent", action: "Runway projection", recommendation: "Extend runway by delaying non-critical hires", impact_score: 0.75 },
-      { agent_name: "Forecasting agent", action: "Churn model updated", recommendation: "Focus retention on accounts 18–24 months old", impact_score: 0.65 },
-    ];
-    for (const log of logs) {
-      await db.run(
-        "INSERT INTO agent_logs (agent_name, action, recommendation, impact_score) VALUES ($1, $2, $3, $4) RETURNING id",
-        [log.agent_name, log.action, log.recommendation, log.impact_score]
-      );
-    }
-  }
-
-  // Sample models
-  const modelsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM models"))!;
-  if (Number(modelsCount.count) === 0) {
-    const models = [
-      ["Revenue forecast v1", "1", JSON.stringify({ horizon_months: 12, method: "linear" })],
-      ["Expense model", "1", JSON.stringify({ categories: ["payroll", "ops", "marketing"] })],
-      ["Churn prediction", "1", JSON.stringify({ lookback_months: 6, threshold: 0.4 })],
-      ["CAC payback", "1", JSON.stringify({ cohort_window: 12 })],
-    ];
-    for (const [name, version, config] of models) {
-      await db.run(
-        "INSERT INTO models (name, version, config) VALUES ($1, $2, $3) RETURNING id",
-        [name, version, config]
-      );
-    }
-  }
-
-  // Sample integrations
-  const integrationsCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM integrations"))!;
-  if (Number(integrationsCount.count) === 0) {
-    const integrations = [
-      { provider: "QuickBooks", type: "accounting", status: "disconnected" },
-      { provider: "Stripe", type: "payments", status: "disconnected" },
-      { provider: "Xero", type: "accounting", status: "disconnected" },
-    ];
-    for (const i of integrations) {
-      await db.run(
-        "INSERT INTO integrations (provider, type, status) VALUES ($1, $2, $3) RETURNING id",
-        [i.provider, i.type, i.status]
-      );
-    }
-  }
-}
 
 async function startServer() {
   await initSchema();
@@ -171,6 +57,7 @@ async function startServer() {
   }
   app.use((_req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
     next();
   });
 
@@ -194,11 +81,15 @@ async function startServer() {
     }
   });
 
+  const MAX_TEXT_LENGTH = 10000;
   app.post(API.decisions, async (req, res) => {
     try {
       const { decision_text, context, expected_outcome } = req.body ?? {};
       if (!decision_text || typeof decision_text !== "string") {
         return res.status(400).json(validationErrorResponse("decision_text is required", "decision_text"));
+      }
+      if (decision_text.length > MAX_TEXT_LENGTH) {
+        return res.status(400).json(validationErrorResponse("decision_text too long", "decision_text"));
       }
       const info = await db.run(
         "INSERT INTO decisions (decision_text, context, expected_outcome) VALUES ($1, $2, $3) RETURNING id",
@@ -231,6 +122,9 @@ async function startServer() {
       if (!action || typeof action !== "string") {
         return res.status(400).json(validationErrorResponse("action is required", "action"));
       }
+      if (agent_name.length > MAX_TEXT_LENGTH || action.length > MAX_TEXT_LENGTH) {
+        return res.status(400).json(validationErrorResponse("Field too long"));
+      }
       const info = await db.run(
         "INSERT INTO agent_logs (agent_name, action, recommendation, impact_score) VALUES ($1, $2, $3, $4) RETURNING id",
         [agent_name, action, recommendation ?? null, impact_score ?? null]
@@ -243,13 +137,26 @@ async function startServer() {
     }
   });
 
+  const MAX_ARRAY_LENGTH = 120; // ~10 years of monthly data
   app.post(API.healthScore, async (req, res) => {
     try {
       const data = req.body;
       if (!Array.isArray(data)) {
         return res.status(400).json({ error: "Expected array of financial metrics" });
       }
-      const result = computeHealthScore(data);
+      if (data.length > MAX_ARRAY_LENGTH) {
+        return res.status(400).json({ error: `Array too large (max ${MAX_ARRAY_LENGTH} items)` });
+      }
+      const normalized = data.map((d: unknown) => {
+        const o = d && typeof d === "object" && !Array.isArray(d) ? (d as Record<string, unknown>) : {};
+        return {
+          month: String(o.month ?? ""),
+          revenue: Number(o.revenue) || 0,
+          expenses: Number(o.expenses) || 0,
+          cash_on_hand: Number(o.cash_on_hand) || 0,
+        };
+      });
+      const result = computeHealthScore(normalized);
       res.json(result);
     } catch (err) {
       console.error("POST /api/health-score:", err);
@@ -263,7 +170,19 @@ async function startServer() {
       if (!Array.isArray(data)) {
         throw BadRequestError("Expected array of financial metrics");
       }
-      const result = await generateInsights(data);
+      if (data.length > MAX_ARRAY_LENGTH) {
+        throw BadRequestError(`Array too large (max ${MAX_ARRAY_LENGTH} items)`);
+      }
+      const normalized = data.map((d: unknown) => {
+        const o = d && typeof d === "object" && !Array.isArray(d) ? (d as Record<string, unknown>) : {};
+        return {
+          month: String(o.month ?? ""),
+          revenue: Number(o.revenue) || 0,
+          expenses: Number(o.expenses) || 0,
+          cash_on_hand: Number(o.cash_on_hand) || 0,
+        };
+      });
+      const result = await generateInsights(normalized);
       res.json(result);
     } catch (err) {
       if (err instanceof HttpError) {
@@ -281,7 +200,19 @@ async function startServer() {
       if (!decision || typeof decision !== "string" || !Array.isArray(financials)) {
         throw BadRequestError("decision (string) and financials (array) are required");
       }
-      const result = await simulateDecision(decision, financials);
+      if (decision.length > MAX_TEXT_LENGTH || financials.length > MAX_ARRAY_LENGTH) {
+        throw BadRequestError("decision or financials too large");
+      }
+      const normalized = financials.slice(0, MAX_ARRAY_LENGTH).map((d: unknown) => {
+        const o = d && typeof d === "object" && !Array.isArray(d) ? (d as Record<string, unknown>) : {};
+        return {
+          month: String(o.month ?? ""),
+          revenue: Number(o.revenue) || 0,
+          expenses: Number(o.expenses) || 0,
+          cash_on_hand: Number(o.cash_on_hand) || 0,
+        };
+      });
+      const result = await simulateDecision(decision, normalized);
       res.json(result);
     } catch (err) {
       if (err instanceof HttpError) {
@@ -293,21 +224,27 @@ async function startServer() {
     }
   });
 
+  const MAX_CHAT_MESSAGES = 50;
+  const MAX_MESSAGE_LENGTH = 8000;
   app.post(API.chat, async (req, res) => {
     try {
       const { messages } = req.body ?? {};
       if (!Array.isArray(messages)) {
         throw BadRequestError("messages (array of { role, content }) is required");
       }
+      if (messages.length > MAX_CHAT_MESSAGES) {
+        throw BadRequestError(`Too many messages (max ${MAX_CHAT_MESSAGES})`);
+      }
       const valid = messages.every(
-        (m: unknown) =>
-          m &&
-          typeof m === "object" &&
-          (m as { role?: string }).role in { user: 1, assistant: 1 } &&
-          typeof (m as { content?: unknown }).content === "string"
+        (m: unknown) => {
+          if (!m || typeof m !== "object") return false;
+          const msg = m as { role?: string; content?: unknown };
+          if (!(msg.role in { user: 1, assistant: 1 }) || typeof msg.content !== "string") return false;
+          return msg.content.length <= MAX_MESSAGE_LENGTH;
+        }
       );
       if (!valid) {
-        throw BadRequestError("Each message must have role 'user' or 'assistant' and content string");
+        throw BadRequestError("Each message must have role 'user' or 'assistant' and content string (max 8000 chars)");
       }
       const reply = await chat(messages as { role: "user" | "assistant"; content: string }[]);
       res.json({ reply });
@@ -337,9 +274,14 @@ async function startServer() {
       if (!name || typeof name !== "string") {
         return res.status(400).json(validationErrorResponse("name is required", "name"));
       }
+      if (name.length > MAX_TEXT_LENGTH) {
+        return res.status(400).json(validationErrorResponse("name too long", "name"));
+      }
+      const MAX_CONFIG_LENGTH = 50000;
+      const configVal = config == null ? null : (typeof config === "string" ? config : JSON.stringify(config)).slice(0, MAX_CONFIG_LENGTH);
       const info = await db.run(
         "INSERT INTO models (name, version, config) VALUES ($1, $2, $3) RETURNING id",
-        [name, version ?? "1", config ?? null]
+        [name, version ?? "1", configVal]
       );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
@@ -367,9 +309,14 @@ async function startServer() {
       if (!type || typeof type !== "string") {
         return res.status(400).json(validationErrorResponse("type is required", "type"));
       }
+      if (name.length > MAX_TEXT_LENGTH || type.length > 500) {
+        return res.status(400).json(validationErrorResponse("Field too long"));
+      }
+      const MAX_CONFIG_LENGTH = 50000;
+      const configVal = config == null ? null : (typeof config === "string" ? config : JSON.stringify(config)).slice(0, MAX_CONFIG_LENGTH);
       const info = await db.run(
         "INSERT INTO agents (name, type, config, status) VALUES ($1, $2, $3, $4) RETURNING id",
-        [name, type, config ?? null, status ?? "idle"]
+        [name, type, configVal, status ?? "idle"]
       );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {
@@ -397,9 +344,14 @@ async function startServer() {
       if (!type || typeof type !== "string") {
         return res.status(400).json(validationErrorResponse("type is required", "type"));
       }
+      if (provider.length > MAX_TEXT_LENGTH || type.length > 500) {
+        return res.status(400).json(validationErrorResponse("Field too long"));
+      }
+      const MAX_CONFIG_LENGTH = 50000;
+      const configVal = config == null ? null : (typeof config === "string" ? config : JSON.stringify(config)).slice(0, MAX_CONFIG_LENGTH);
       const info = await db.run(
         "INSERT INTO integrations (provider, type, config, status) VALUES ($1, $2, $3, $4) RETURNING id",
-        [provider, type, config ?? null, status ?? "disconnected"]
+        [provider, type, configVal, status ?? "disconnected"]
       );
       res.status(201).json({ id: info.lastInsertRowid });
     } catch (err) {

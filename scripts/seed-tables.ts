@@ -6,7 +6,7 @@
  */
 import "dotenv/config";
 import { getDb, initSchema } from "../server/db";
-import { seed } from "../server";
+import { seed } from "../server/seed";
 
 async function main() {
   await initSchema();
