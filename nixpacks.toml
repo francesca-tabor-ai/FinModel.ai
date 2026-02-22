@@ -1,0 +1,5 @@
+# Force Node 20 for Railway/Nixpacks (deps like better-sqlite3, @google/genai require it)
+# https://nixpacks.com/docs/configuration
+
+[variables]
+NIXPACKS_NODE_VERSION = "20"

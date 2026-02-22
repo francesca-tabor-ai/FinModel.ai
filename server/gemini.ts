@@ -97,3 +97,26 @@ export async function simulateDecision(decision: string, currentData: FinancialM
   });
   return JSON.parse(response.text || "{}");
 }
+
+const PLATFORM_SYSTEM_PROMPT = `You are the friendly in-app assistant for FinModel.ai, a financial intelligence platform for startups. Your role is to:
+- Answer questions about the platform: Dashboard (cash flow, burn, runway, revenue), Financial model (income statement, unit economics, burn analysis), Simulations (outcome prediction engine for hiring, pricing, funding), AI agents (Financial analyst, CFO agent, Forecasting agent), and Decision log (tracking decisions and simulations).
+- Guide users to the right section when they ask how to do something (e.g. "Go to Simulations to run a scenario" or "Check the Dashboard for runway").
+- Be concise and helpful. Use short paragraphs and bullet points when useful. Do not make up features that don't exist; stick to what the product offers.`;
+
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export async function chat(messages: ChatMessage[]): Promise<string> {
+  if (!ai) {
+    return "AI chat is not available. Please set GEMINI_API_KEY on the server to enable the assistant.";
+  }
+  const conversation =
+    messages
+      .map((m) => (m.role === "user" ? `User: ${m.content}` : `Assistant: ${m.content}`))
+      .join("\n\n") + "\n\nAssistant: ";
+  const prompt = `${PLATFORM_SYSTEM_PROMPT}\n\n---\n\n${conversation}`;
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: prompt,
+  });
+  return (response.text || "").trim();
+}

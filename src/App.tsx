@@ -36,6 +36,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { geminiService, FinancialMetric } from './services/geminiService';
 import { cn } from './lib/utils';
 import { API } from './lib/api';
+import { ChatWidget } from './components/ChatWidget';
 
 type DecisionRow = { id: number; timestamp: string; decision_text: string; context?: string | null; expected_outcome?: string | null; actual_outcome?: string | null; status: string };
 
@@ -638,6 +639,7 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+      <ChatWidget />
     </div>
   );
 }

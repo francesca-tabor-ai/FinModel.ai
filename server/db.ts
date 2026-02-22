@@ -87,18 +87,17 @@ export function getDb(): DbAdapter {
   return dbInstance;
 }
 
-/** PostgreSQL schema (SERIAL, TIMESTAMP). For SQLite we use different DDL in initSchema. */
-const PG_SCHEMA = `
-  CREATE TABLE IF NOT EXISTS financial_data (
+/** PostgreSQL schema: one statement per table so init never fails on split/semicolon. */
+const PG_TABLE_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS financial_data (
     id SERIAL PRIMARY KEY,
     month TEXT NOT NULL,
     revenue DOUBLE PRECISION DEFAULT 0,
     expenses DOUBLE PRECISION DEFAULT 0,
     cash_on_hand DOUBLE PRECISION DEFAULT 0,
     category TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS decisions (
+  )`,
+  `CREATE TABLE IF NOT EXISTS decisions (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     decision_text TEXT NOT NULL,
@@ -106,27 +105,24 @@ const PG_SCHEMA = `
     expected_outcome TEXT,
     actual_outcome TEXT,
     status TEXT DEFAULT 'pending'
-  );
-
-  CREATE TABLE IF NOT EXISTS agent_logs (
+  )`,
+  `CREATE TABLE IF NOT EXISTS agent_logs (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     agent_name TEXT NOT NULL,
     action TEXT NOT NULL,
     recommendation TEXT,
     impact_score DOUBLE PRECISION
-  );
-
-  CREATE TABLE IF NOT EXISTS models (
+  )`,
+  `CREATE TABLE IF NOT EXISTS models (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     version TEXT NOT NULL DEFAULT '1',
     config TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS agents (
+  )`,
+  `CREATE TABLE IF NOT EXISTS agents (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     type TEXT NOT NULL,
@@ -134,9 +130,8 @@ const PG_SCHEMA = `
     status TEXT NOT NULL DEFAULT 'idle',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS integrations (
+  )`,
+  `CREATE TABLE IF NOT EXISTS integrations (
     id SERIAL PRIMARY KEY,
     provider TEXT NOT NULL,
     type TEXT NOT NULL,
@@ -145,15 +140,14 @@ const PG_SCHEMA = `
     last_sync_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS users (
+  )`,
+  `CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-`;
+  )`,
+];
 
 const SQLITE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS financial_data (
@@ -224,12 +218,19 @@ const SQLITE_SCHEMA = `
 
 export async function initSchema(): Promise<void> {
   const db = getDb();
-  const schema = isPostgres ? PG_SCHEMA : SQLITE_SCHEMA;
   if (isPostgres) {
-    for (const stmt of schema.split(";").filter((s) => s.trim())) {
-      await db.exec(stmt.trim() + ";");
+    console.log("[db] Initializing PostgreSQL schema (%d tables)...", PG_TABLE_STATEMENTS.length);
+    for (let i = 0; i < PG_TABLE_STATEMENTS.length; i++) {
+      const stmt = PG_TABLE_STATEMENTS[i];
+      try {
+        await db.exec(stmt);
+      } catch (err) {
+        console.error("[db] Schema statement %d failed:", i + 1, err);
+        throw err;
+      }
     }
+    console.log("[db] PostgreSQL schema initialized.");
   } else {
-    await db.exec(schema);
+    await db.exec(SQLITE_SCHEMA);
   }
 }

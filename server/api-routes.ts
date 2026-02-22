@@ -8,6 +8,7 @@ export const API = {
   agentLogs: "/api/agent-logs",
   insights: "/api/insights",
   simulate: "/api/simulate",
+  chat: "/api/chat",
   models: "/api/models",
   agents: "/api/agents",
   integrations: "/api/integrations",

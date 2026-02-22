@@ -7,5 +7,6 @@ export const API = {
   agentLogs: "/api/agent-logs",
   insights: "/api/insights",
   simulate: "/api/simulate",
+  chat: "/api/chat",
   events: "/api/events",
 } as const;

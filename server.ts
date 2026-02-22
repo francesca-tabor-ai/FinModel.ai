@@ -3,7 +3,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
-import { generateInsights, simulateDecision } from "./server/gemini";
+import { generateInsights, simulateDecision, chat } from "./server/gemini";
 import { HttpError, BadRequestError, UnauthorizedError } from "./server/errors";
 import { API, validationErrorResponse } from "./server/api-routes";
 import * as auth from "./server/auth";
@@ -275,6 +275,34 @@ async function startServer() {
       }
       console.error("POST /api/simulate:", err);
       res.status(500).json({ error: "Failed to run simulation" });
+    }
+  });
+
+  app.post(API.chat, async (req, res) => {
+    try {
+      const { messages } = req.body ?? {};
+      if (!Array.isArray(messages)) {
+        throw BadRequestError("messages (array of { role, content }) is required");
+      }
+      const valid = messages.every(
+        (m: unknown) =>
+          m &&
+          typeof m === "object" &&
+          (m as { role?: string }).role in { user: 1, assistant: 1 } &&
+          typeof (m as { content?: unknown }).content === "string"
+      );
+      if (!valid) {
+        throw BadRequestError("Each message must have role 'user' or 'assistant' and content string");
+      }
+      const reply = await chat(messages as { role: "user" | "assistant"; content: string }[]);
+      res.json({ reply });
+    } catch (err) {
+      if (err instanceof HttpError) {
+        res.status(err.statusCode).json({ error: err.message });
+        return;
+      }
+      console.error("POST /api/chat:", err);
+      res.status(500).json({ error: "Chat failed" });
     }
   });
 
