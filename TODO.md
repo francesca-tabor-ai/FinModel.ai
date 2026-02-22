@@ -69,3 +69,20 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Runway / risk** | Runway on dashboard; simulation shows runway impact. No explicit risk alerts. |
 | **Profitability date** | Simulation returns profitability (text from Gemini). No standalone estimator UI. |
 | **Monte Carlo viz** | Probabilistic scenarios (Best/Worst/Expected) as bar chart; not full Monte Carlo distribution. |
+
+---
+
+## AI Insights & Recommendations (Phase 4)
+- [x] Performance insights (burn rate, runway, profitability)
+- [x] Risk insights (bankruptcy risk, runway risk, cost overruns)
+- [x] Opportunity insights (pricing, cost reduction, growth)
+- [x] Actionable recommendations with impact scoring
+- [x] Insight history and tracking
+
+| Item | In codebase today |
+|------|--------------------|
+| **Performance insights** | AI insights panel (burn, runway, revenue growth) and recommendations from Gemini; no structured performance vs risk vs opportunity buckets. |
+| **Risk insights** | Not categorized; insights/recommendations may mention risk but no dedicated bankruptcy/runway/cost-overrun views. |
+| **Opportunity insights** | Recommendations can cover pricing/cost/growth; no separate opportunity section or tagging. |
+| **Recommendations + impact** | Strategic recommendations (title + description); simulation logs store impact_score (e.g. runway months). No generic impact scoring on recommendations. |
+| **Insight history** | Decision log shows past simulations and impact; no dedicated insight/recommendation history or tracking. |
