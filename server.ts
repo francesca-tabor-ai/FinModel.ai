@@ -12,7 +12,7 @@ import { getDb, initSchema } from "./server/db";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function seed(db: ReturnType<typeof getDb>) {
+export async function seed(db: ReturnType<typeof getDb>) {
   // Financial data: 12 months, deterministic for reproducible seed
   const financialCount = (await db.get<{ count: string }>("SELECT COUNT(*) as count FROM financial_data"))!;
   if (Number(financialCount.count) === 0) {

@@ -11,6 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "tsx server.ts",
+    "create-tables": "tsx scripts/create-tables.ts",
+    "seed-tables": "tsx scripts/seed-tables.ts",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
