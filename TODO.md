@@ -103,3 +103,22 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Sensitivity analysis** | Not implemented; no “vary one input, see output” or tornado charts. |
 | **Decision comparison** | Single result per run; no side-by-side comparison of multiple scenarios. |
 | **Decision history / learning** | Decision log lists past simulations with impact score; no learning loop or recommendations from history. |
+
+---
+
+## AI Agents Management (Phase 5)
+- [x] Financial Analyst Agent display
+- [x] CFO Agent interface
+- [x] Forecasting Agent monitoring
+- [x] Optimization Agent controls
+- [x] Autonomous Execution Agent (premium)
+- [x] Agent activity logs and recommendations
+
+| Item | In codebase today |
+|------|--------------------|
+| **Financial Analyst Agent** | Card on AI agents tab (display only); description “Analyzing burn rate and unit economics.” No live execution or controls. |
+| **CFO Agent** | Card on AI agents tab (display only); “Optimizing runway and hiring plans.” No interface or controls. |
+| **Forecasting Agent** | Card on AI agents tab (Idle); “Predicting future financial outcomes.” Simulations log under this agent name; no dedicated monitoring UI. |
+| **Optimization Agent** | Not present; only Financial analyst, CFO, Forecasting agents shown. No optimization agent or controls. |
+| **Autonomous Execution Agent** | Not present; no premium or autonomous-execution agent. |
+| **Activity logs / recommendations** | “Recent agent activity” list from `agent_logs` (agent_name, action, recommendation, timestamp). Decision simulations appear in log and in Decision log tab. |
