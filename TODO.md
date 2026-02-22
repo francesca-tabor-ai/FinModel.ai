@@ -183,3 +183,22 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **API key management** | GEMINI_API_KEY is server env only; no in-app API key entry or management. |
 | **User preferences** | Not implemented; no auth or user-specific preferences. |
 | **Account settings** | Not implemented; Settings sidebar item has no target (onClick empty); no account or settings page. |
+
+---
+
+## Onboarding Flow (Phase 6)
+- [x] Welcome and company information collection
+- [x] Data source connection wizard
+- [x] Initial financial model generation
+- [x] Key metrics setup
+- [x] First recommendations display
+- [x] Onboarding completion and activation
+
+| Item | In codebase today |
+|------|--------------------|
+| **Welcome / company info** | Not implemented; app loads directly to dashboard. No welcome step or company data collection. |
+| **Data source wizard** | Not implemented; no connection flow. Financial data is seed DB or local only. |
+| **Initial model generation** | Seed data populates financial_data if empty; no guided model generation or wizard. |
+| **Key metrics setup** | Dashboard shows fixed metrics (cash, burn, runway, MRR); no setup step or user-defined metrics. |
+| **First recommendations** | AI insights load on first dashboard visit if GEMINI_API_KEY set; no dedicated “first recommendations” onboarding step. |
+| **Completion / activation** | Not implemented; no onboarding completion state or activation gate. |
