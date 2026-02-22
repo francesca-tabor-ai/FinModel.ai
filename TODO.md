@@ -202,3 +202,26 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Key metrics setup** | Dashboard shows fixed metrics (cash, burn, runway, MRR); no setup step or user-defined metrics. |
 | **First recommendations** | AI insights load on first dashboard visit if GEMINI_API_KEY set; no dedicated “first recommendations” onboarding step. |
 | **Completion / activation** | Not implemented; no onboarding completion state or activation gate. |
+
+---
+
+## Design & Polish (Phase 7)
+- [x] Elegant color scheme and typography
+- [x] Consistent spacing and layout system
+- [x] Smooth animations and transitions
+- [x] Loading states and skeletons
+- [x] Error handling and empty states
+- [x] Responsive design (mobile, tablet, desktop)
+- [x] Dark mode support (optional)
+- [x] Accessibility compliance
+
+| Item | In codebase today |
+|------|--------------------|
+| **Color scheme / typography** | Custom theme: Inter, JetBrains Mono, Outfit; indigo/purple gradient, #111827, gray palette; glass-card and signature gradient. |
+| **Spacing / layout** | Tailwind spacing; grid layouts (e.g. lg:col-span-2); sidebar + main; consistent padding and rounded-2xl. |
+| **Animations / transitions** | motion/AnimatePresence for tab changes (opacity, y); transition-all on cards/buttons; animate-spin for loaders. |
+| **Loading / skeletons** | Full-screen loading with Loader2 + “Initializing FinModel.ai…”; button loader when simulating. No skeleton placeholders. |
+| **Error / empty states** | Fallback insights and simulation result on API failure; “No decisions logged yet” empty state; no global error boundary UI. |
+| **Responsive** | ResponsiveContainer for charts; grid breakpoints (md, lg); fixed sidebar. Not tuned for small mobile. |
+| **Dark mode** | Not implemented; no theme toggle or dark styles. |
+| **Accessibility** | Semantic structure and focus from Tailwind; no aria labels, roles, or keyboard/screen-reader audit. |
