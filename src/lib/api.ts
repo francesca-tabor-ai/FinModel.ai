@@ -6,6 +6,7 @@ export const API = {
   decisions: "/api/decisions",
   agentLogs: "/api/agent-logs",
   insights: "/api/insights",
+  healthScore: "/api/health-score",
   simulate: "/api/simulate",
   chat: "/api/chat",
   events: "/api/events",

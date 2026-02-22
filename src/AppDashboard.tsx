@@ -47,6 +47,7 @@ export default function AppDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [financials, setFinancials] = useState<FinancialMetric[]>([]);
   const [insights, setInsights] = useState<any>(null);
+  const [healthScore, setHealthScore] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [decisionInput, setDecisionInput] = useState('');
@@ -84,16 +85,19 @@ export default function AppDashboard() {
       setAgentLogs(logData);
       setDecisions(Array.isArray(decData) ? decData : []);
 
-      try {
-        const aiInsights = await geminiService.generateInsights(finData);
-        setInsights(aiInsights);
-      } catch (insightError) {
-        console.error("AI insights:", insightError);
-        setInsights({
-          insights: ["Unable to load AI insights. Check that GEMINI_API_KEY is set on the server."],
-          recommendations: [],
-        });
-      }
+      const [aiInsights, healthResult] = await Promise.allSettled([
+          geminiService.generateInsights(finData),
+          geminiService.getHealthScore(finData),
+        ]);
+        setInsights(
+          aiInsights.status === "fulfilled"
+            ? aiInsights.value
+            : {
+                insights: ["Unable to load AI insights. Check that GEMINI_API_KEY is set on the server."],
+                recommendations: [],
+              }
+        );
+        setHealthScore(healthResult.status === "fulfilled" ? healthResult.value : null);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -200,7 +204,7 @@ export default function AppDashboard() {
           {activeTab === 'dashboard' && (
             <PageWrapper key="dashboard">
               <Suspense fallback={<PageFallback />}>
-                <DashboardView financials={financials} insights={insights} />
+                <DashboardView financials={financials} insights={insights} healthScore={healthScore} />
               </Suspense>
             </PageWrapper>
           )}

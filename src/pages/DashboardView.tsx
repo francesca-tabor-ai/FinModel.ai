@@ -2,7 +2,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'motion/react';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, AlertCircle, Zap, BrainCircuit } from 'lucide-react';
 import { cn } from '../lib/utils';
-import type { FinancialMetric } from '../services/geminiService';
+import type { FinancialMetric, HealthScoreResult } from '../services/geminiService';
+import { HealthScoreCard } from '../components/HealthScoreCard';
 
 const StatCard = ({ label, value, trend, trendValue, icon: Icon, index }: any) => (
   <motion.div
@@ -40,10 +41,12 @@ const StatCard = ({ label, value, trend, trendValue, icon: Icon, index }: any) =
 
 export default function DashboardView({ 
   financials, 
-  insights 
+  insights,
+  healthScore 
 }: { 
   financials: FinancialMetric[]; 
   insights: { insights: string[]; recommendations: { title: string; description: string }[] } | null;
+  healthScore?: HealthScoreResult | null;
 }) {
   const latestCash = financials[financials.length - 1]?.cash_on_hand || 0;
   const latestBurn = financials[financials.length - 1] ? financials[financials.length - 1].expenses - financials[financials.length - 1].revenue : 0;
@@ -51,6 +54,7 @@ export default function DashboardView({
 
   return (
     <div className="space-y-8">
+      <HealthScoreCard result={healthScore ?? null} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard label="Cash on Hand" value={`$${latestCash.toLocaleString()}`} trend="up" trendValue="12%" icon={TrendingUp} index={0} />
         <StatCard label="Monthly Burn" value={`$${latestBurn.toLocaleString()}`} trend="down" trendValue="4%" icon={AlertCircle} index={1} />

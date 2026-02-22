@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { generateInsights, simulateDecision, chat } from "./server/gemini";
+import { computeHealthScore } from "./server/healthScore";
 import { HttpError, BadRequestError, UnauthorizedError } from "./server/errors";
 import { API, validationErrorResponse } from "./server/api-routes";
 import * as auth from "./server/auth";
@@ -239,6 +240,20 @@ async function startServer() {
     } catch (err) {
       console.error("POST", API.agentLogs, err);
       res.status(500).json({ error: "Failed to save agent log" });
+    }
+  });
+
+  app.post(API.healthScore, async (req, res) => {
+    try {
+      const data = req.body;
+      if (!Array.isArray(data)) {
+        return res.status(400).json({ error: "Expected array of financial metrics" });
+      }
+      const result = computeHealthScore(data);
+      res.json(result);
+    } catch (err) {
+      console.error("POST /api/health-score:", err);
+      res.status(500).json({ error: "Failed to compute health score" });
     }
   });
 
