@@ -1,0 +1,7 @@
+{
+  "name": "FinModel.ai",
+  "description": "Autonomous Financial Intelligence Platform for startups. Build dynamic models, receive AI-driven insights, and optimize financial performance with autonomous agents.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
