@@ -34,4 +34,21 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Trend indicators** | Cards show up/down trend badges (e.g. 12%, 4%, 2.1m, 18%). |
 | **Charts** | Cash flow trajectory (AreaChart), burn bar chart; simulation scenario bars. |
 | **Health score** | No dedicated health score widget; runway and metrics serve as proxies. |
-| **Quick actions** | “Export report” and “New decision” in header. |
+| **Quick actions** | "Export report" and "New decision" in header. |
+
+---
+
+## AI Financial Modeling (Phase 4)
+- [x] Automated financial model generation
+- [x] Income statement, balance sheet, cash flow statements
+- [x] Revenue and cost model builders
+- [x] Model explainability and driver analysis
+- [x] Historical model versions and comparisons
+
+| Item | In codebase today |
+|------|--------------------|
+| **Automated model generation** | Seed data + Gemini-powered insights and simulations; no full model generator UI. |
+| **Statements** | Pro-forma income statement (revenue, expenses, net income, cash); cash flow trajectory chart. No balance sheet or formal cash flow statement. |
+| **Revenue/cost builders** | Unit economics (LTV, CAC, payback) and burn analysis displayed; no interactive model builder. |
+| **Explainability / drivers** | AI insights and recommendations from Gemini; no structured driver breakdown or explainability view. |
+| **Versions / comparisons** | Decision log and simulation results; no versioned models or side-by-side comparison. |
