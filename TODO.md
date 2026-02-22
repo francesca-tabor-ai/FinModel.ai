@@ -121,4 +121,27 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Forecasting Agent** | Card on AI agents tab (Idle); “Predicting future financial outcomes.” Simulations log under this agent name; no dedicated monitoring UI. |
 | **Optimization Agent** | Not present; only Financial analyst, CFO, Forecasting agents shown. No optimization agent or controls. |
 | **Autonomous Execution Agent** | Not present; no premium or autonomous-execution agent. |
-| **Activity logs / recommendations** | “Recent agent activity” list from `agent_logs` (agent_name, action, recommendation, timestamp). Decision simulations appear in log and in Decision log tab. |
+| **Activity logs / recommendations** | "Recent agent activity" list from `agent_logs` (agent_name, action, recommendation, timestamp). Decision simulations appear in log and in Decision log tab. |
+
+---
+
+## Integrations (Phase 5)
+- [x] QuickBooks integration setup
+- [x] Xero integration setup
+- [x] Stripe/PayPal payment integration
+- [x] HubSpot CRM integration
+- [x] Gusto/Deel HR integration
+- [x] Plaid banking integration
+- [x] Integration status dashboard
+- [x] Data sync controls and scheduling
+
+| Item | In codebase today |
+|------|--------------------|
+| **QuickBooks** | Not implemented; no accounting integrations. |
+| **Xero** | Not implemented; no accounting integrations. |
+| **Stripe/PayPal** | Not implemented; no payment provider integrations. |
+| **HubSpot CRM** | Not implemented; no CRM integrations. |
+| **Gusto/Deel HR** | Not implemented; no HR/payroll integrations. |
+| **Plaid** | Not implemented; no banking/transaction integrations. |
+| **Integration status dashboard** | Not implemented; no integrations to show status for. |
+| **Data sync / scheduling** | Not implemented; financial data is seed/local DB only; no sync or scheduling. |
