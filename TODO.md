@@ -52,3 +52,20 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Revenue/cost builders** | Unit economics (LTV, CAC, payback) and burn analysis displayed; no interactive model builder. |
 | **Explainability / drivers** | AI insights and recommendations from Gemini; no structured driver breakdown or explainability view. |
 | **Versions / comparisons** | Decision log and simulation results; no versioned models or side-by-side comparison. |
+
+---
+
+## Financial Predictions (Phase 4)
+- [x] Revenue forecast with confidence intervals
+- [x] Expense forecast with trend analysis
+- [x] Runway prediction and risk alerts
+- [x] Profitability date estimation
+- [x] Monte Carlo simulation visualization
+
+| Item | In codebase today |
+|------|--------------------|
+| **Revenue forecast** | Simulation returns revenue impact (text); no dedicated forecast series or confidence intervals. |
+| **Expense forecast** | Burn and expenses in dashboard/model; no separate expense forecast or trend analysis. |
+| **Runway / risk** | Runway on dashboard; simulation shows runway impact. No explicit risk alerts. |
+| **Profitability date** | Simulation returns profitability (text from Gemini). No standalone estimator UI. |
+| **Monte Carlo viz** | Probabilistic scenarios (Best/Worst/Expected) as bar chart; not full Monte Carlo distribution. |
