@@ -86,3 +86,20 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Opportunity insights** | Recommendations can cover pricing/cost/growth; no separate opportunity section or tagging. |
 | **Recommendations + impact** | Strategic recommendations (title + description); simulation logs store impact_score (e.g. runway months). No generic impact scoring on recommendations. |
 | **Insight history** | Decision log shows past simulations and impact; no dedicated insight/recommendation history or tracking. |
+
+---
+
+## Decision Intelligence Simulator (Phase 5)
+- [x] Scenario builder for hiring, pricing, funding decisions
+- [x] Outcome prediction display
+- [x] Sensitivity analysis
+- [x] Decision comparison tools
+- [x] Decision history and learning
+
+| Item | In codebase today |
+|------|--------------------|
+| **Scenario builder** | Free-text input for any scenario (placeholder mentions hiring, pricing, funding); no structured templates or step-by-step builder. |
+| **Outcome prediction** | Summary, runway/revenue/profitability impacts, and probabilistic scenarios (Best/Worst/Expected) bar chart from Gemini. |
+| **Sensitivity analysis** | Not implemented; no “vary one input, see output” or tornado charts. |
+| **Decision comparison** | Single result per run; no side-by-side comparison of multiple scenarios. |
+| **Decision history / learning** | Decision log lists past simulations with impact score; no learning loop or recommendations from history. |
