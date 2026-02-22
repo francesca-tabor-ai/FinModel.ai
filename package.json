@@ -13,6 +13,8 @@
     "start": "tsx server.ts",
     "create-tables": "tsx scripts/create-tables.ts",
     "seed-tables": "tsx scripts/seed-tables.ts",
+    "db:migrate": "npm run create-tables",
+    "db:seed": "npm run seed-tables",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
