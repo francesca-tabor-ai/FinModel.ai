@@ -4,9 +4,14 @@
  */
 import crypto from "crypto";
 
-const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-in-production";
+const isProduction = process.env.NODE_ENV === "production";
+const SESSION_SECRET = process.env.SESSION_SECRET || (isProduction ? "" : "dev-secret-change-in-production");
 const COOKIE_NAME = "finmodel.sid";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+if (isProduction && !SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in production. Add it to your environment.");
+}
 
 const sessions = new Map<string, { userId: number; email: string; expires: number }>();
 
@@ -56,7 +61,8 @@ export function getSessionFromCookie(cookieHeader: string | undefined): { userId
 export function setSessionCookie(sessionId: string): string {
   const sig = sign(sessionId);
   const payload = `${sessionId}.${sig}`;
-  return `${COOKIE_NAME}=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`;
+  const secure = isProduction ? "; Secure" : "";
+  return `${COOKIE_NAME}=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}${secure}`;
 }
 
 export function clearSessionCookie(): string {

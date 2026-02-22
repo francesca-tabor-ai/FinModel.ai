@@ -39,7 +39,8 @@ FinModel.ai/
 | `PORT` | No | Server port (default `3000`). |
 | `NODE_ENV` | No | `production` for serving `dist/`; else Vite dev. |
 | `DATABASE_PATH` | No | SQLite file path (default `finmodel.db`). |
-| `SESSION_SECRET` | No | Secret for signing session cookies (default dev value; set in production). |
+| `SESSION_SECRET` | Yes (production) | Secret for signing session cookies. **Required** when `NODE_ENV=production`; app will not start without it. |
+| `CORS_ORIGIN` | No | If the frontend is on a different origin, set this (e.g. `https://app.example.com`) to allow API requests. |
 
 Load from `.env` or `.env.local` (via `dotenv` in `server.ts`). Never commit `.env` (see `.gitignore`).
 
@@ -69,7 +70,8 @@ Seed data is inserted when tables are empty. DB file: `finmodel.db` (or `DATABAS
 
 - `GEMINI_API_KEY` is read only in Node (`server/gemini.ts`); never in Vite or client bundle.
 - POST bodies are validated (required fields, types); errors return 400/500 with JSON.
-- **Auth:** session-based login (POST /api/login, GET /api/me, POST /api/logout). Sessions signed with `SESSION_SECRET`; set a strong secret in production. Demo user: demo@finmodel.ai / demo123. API routes are not yet protected by auth.
+- **Auth:** session-based login (POST /api/login, GET /api/me, POST /api/logout). Sessions signed with `SESSION_SECRET`; **required** in production. Cookie uses `Secure` when `NODE_ENV=production`. Demo user: demo@finmodel.ai / demo123. API routes are not yet protected by auth.
+- **Production:** `SESSION_SECRET` is required when `NODE_ENV=production`. Health check: `GET /api/health`. JSON body limit 1MB. Optional `CORS_ORIGIN` for cross-origin frontends.
 
 ## See also
 

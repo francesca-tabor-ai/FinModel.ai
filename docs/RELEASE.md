@@ -27,5 +27,5 @@ Use this for creating a final checkpoint or release (e.g. v1.0.0).
 
 ## After checkpoint
 
-- Deploy using your platform (e.g. set `NODE_ENV=production`, `GEMINI_API_KEY`, `PORT`, run `npm run build` then `npm run start`).
+- Deploy using your platform. Set `NODE_ENV=production`, `GEMINI_API_KEY`, and **`SESSION_SECRET`** (required in production). Optionally set `PORT`, `DATABASE_URL` (PostgreSQL), `CORS_ORIGIN`. Run `npm run build` then `npm run start`. Use `GET /api/health` for probes.
 - Attach the tag to a GitHub/GitLab release if you use one.

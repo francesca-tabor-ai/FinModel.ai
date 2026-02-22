@@ -5,6 +5,15 @@ All JSON request/response. Errors return JSON `{ "error": "message" }` with appr
 
 ---
 
+## GET /api/health
+
+Liveness/readiness check for production (e.g. load balancers, Kubernetes). No auth required.
+
+**Response:** `200`  
+**Body:** `{ "status": "ok" }`
+
+---
+
 ## GET /api/financials
 
 Returns all financial data rows, ordered by month ascending.

@@ -147,7 +147,31 @@ async function startServer() {
     });
   }
 
-  app.use(express.json());
+  app.use(express.json({ limit: "1mb" }));
+
+  // Health check for load balancers and orchestrators
+  app.get("/api/health", (_req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+  // Optional CORS: set CORS_ORIGIN in production if frontend is on another origin
+  const corsOrigin = process.env.CORS_ORIGIN;
+  if (corsOrigin) {
+    app.use((req, res, next) => {
+      res.setHeader("Access-Control-Allow-Origin", corsOrigin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      if (req.method === "OPTIONS") {
+        return res.status(204).end();
+      }
+      next();
+    });
+  }
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    next();
+  });
 
   app.get(API.financials, async (_req, res) => {
     try {
@@ -420,4 +444,17 @@ async function startServer() {
   });
 }
 
-startServer();
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+  process.exit(1);
+});
+
+startServer().catch((err) => {
+  console.error("Failed to start server:", err);
+  process.exit(1);
+});

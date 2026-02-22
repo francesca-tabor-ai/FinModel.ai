@@ -37,10 +37,14 @@ View your app in AI Studio: https://ai.studio/apps/1321f7cf-886f-4329-b855-6a8ea
 ## Production
 
 1. Build the frontend: `npm run build`
-2. Set `GEMINI_API_KEY` (and optionally `PORT`, `NODE_ENV=production`) in your environment.
+2. Set in your environment:
+   - `NODE_ENV=production`
+   - `GEMINI_API_KEY` (for AI insights and simulations)
+   - `SESSION_SECRET` (required in production; use a long random string)
+   - Optionally: `PORT`, `DATABASE_URL` (PostgreSQL), `CORS_ORIGIN` (if frontend is on another origin)
 3. Start the server: `npm run start`
 
-The server serves the built app from `dist/` and runs the API (including Gemini) server-side so your API key is never exposed to the browser.
+The server serves the built app from `dist/` and runs the API (including Gemini) server-side so your API key is never exposed to the browser. Use `GET /api/health` for liveness/readiness probes.
 
 ## Documentation
 
