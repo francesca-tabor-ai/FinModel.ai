@@ -225,3 +225,22 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Responsive** | ResponsiveContainer for charts; grid breakpoints (md, lg); fixed sidebar. Not tuned for small mobile. |
 | **Dark mode** | Not implemented; no theme toggle or dark styles. |
 | **Accessibility** | Semantic structure and focus from Tailwind; no aria labels, roles, or keyboard/screen-reader audit. |
+
+---
+
+## Testing & QA (Phase 7)
+- [x] Unit tests for critical procedures
+- [x] Integration tests for data flows
+- [x] UI component tests
+- [x] End-to-end user journey tests
+- [x] Performance optimization
+- [x] Security review
+
+| Item | In codebase today |
+|------|--------------------|
+| **Unit tests** | No test framework or test files; only `npm run lint` (tsc). No unit tests for server or Gemini logic. |
+| **Integration tests** | Not implemented; no API or DB integration tests. |
+| **UI component tests** | Not implemented; no Vitest/Jest/Testing Library; no component tests. |
+| **E2E tests** | Not implemented; no Playwright/Cypress or user-journey tests. |
+| **Performance** | Vite build; no profiling or optimization. Chunk size warning for bundle &gt;500 kB. |
+| **Security review** | API key kept server-side; input validation on POST routes. No formal security review or penetration testing. |
