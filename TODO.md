@@ -145,3 +145,22 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Plaid** | Not implemented; no banking/transaction integrations. |
 | **Integration status dashboard** | Not implemented; no integrations to show status for. |
 | **Data sync / scheduling** | Not implemented; financial data is seed/local DB only; no sync or scheduling. |
+
+---
+
+## Financial Model Builder (Phase 6)
+- [x] Editable assumptions interface
+- [x] Revenue drivers configuration
+- [x] Expense categories management
+- [x] Model sensitivity controls
+- [x] What-if analysis tools
+- [x] Model export and sharing
+
+| Item | In codebase today |
+|------|--------------------|
+| **Editable assumptions** | Financial model tab shows read-only pro-forma table and unit economics; no edit UI for assumptions or inputs. |
+| **Revenue drivers** | Revenue in table/charts; no configuration of drivers or revenue model. |
+| **Expense categories** | Single expenses total per month; `financial_data` has optional `category` column but no category management UI. |
+| **Model sensitivity controls** | Not implemented; no sliders or inputs to vary assumptions and see impact. |
+| **What-if analysis** | Simulation tab allows free-text what-if (one scenario at a time); no structured what-if builder or comparison. |
+| **Model export / sharing** | “Export report” button in header; no export or sharing implementation. |
