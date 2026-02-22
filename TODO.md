@@ -163,4 +163,23 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **Expense categories** | Single expenses total per month; `financial_data` has optional `category` column but no category management UI. |
 | **Model sensitivity controls** | Not implemented; no sliders or inputs to vary assumptions and see impact. |
 | **What-if analysis** | Simulation tab allows free-text what-if (one scenario at a time); no structured what-if builder or comparison. |
-| **Model export / sharing** | “Export report” button in header; no export or sharing implementation. |
+| **Model export / sharing** | "Export report" button in header; no export or sharing implementation. |
+
+---
+
+## Settings & Configuration (Phase 6)
+- [x] Autonomous mode toggle and safeguards
+- [x] Notification preferences
+- [x] Data sync frequency and controls
+- [x] API key management
+- [x] User preferences
+- [x] Account settings
+
+| Item | In codebase today |
+|------|--------------------|
+| **Autonomous mode / safeguards** | Not implemented; no toggle or safeguards for autonomous agent execution. |
+| **Notification preferences** | Not implemented; no notification or alert preferences. |
+| **Data sync frequency / controls** | Not implemented; no integrations or sync; no frequency or control UI. |
+| **API key management** | GEMINI_API_KEY is server env only; no in-app API key entry or management. |
+| **User preferences** | Not implemented; no auth or user-specific preferences. |
+| **Account settings** | Not implemented; Settings sidebar item has no target (onClick empty); no account or settings page. |
