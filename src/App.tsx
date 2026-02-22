@@ -35,6 +35,9 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { geminiService, FinancialMetric } from './services/geminiService';
 import { cn } from './lib/utils';
+import { API } from './lib/api';
+
+type DecisionRow = { id: number; timestamp: string; decision_text: string; context?: string | null; expected_outcome?: string | null; actual_outcome?: string | null; status: string };
 
 // --- Components ---
 
@@ -87,22 +90,32 @@ export default function App() {
   const [decisionInput, setDecisionInput] = useState('');
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [agentLogs, setAgentLogs] = useState<any[]>([]);
+  const [decisions, setDecisions] = useState<DecisionRow[]>([]);
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const es = new EventSource(API.events);
+    es.addEventListener("refresh", () => fetchData());
+    return () => es.close();
+  }, []);
+
   const fetchData = async () => {
     try {
-      const [finRes, logRes] = await Promise.all([
-        fetch('/api/financials'),
-        fetch('/api/agent-logs')
+      const [finRes, logRes, decRes] = await Promise.all([
+        fetch(API.financials),
+        fetch(API.agentLogs),
+        fetch(API.decisions)
       ]);
       const finData = await finRes.json();
       const logData = await logRes.json();
+      const decData = await decRes.json();
       
       setFinancials(finData);
       setAgentLogs(logData);
+      setDecisions(Array.isArray(decData) ? decData : []);
 
       // Generate AI Insights (server-side; may fail if GEMINI_API_KEY not set)
       try {
@@ -130,7 +143,7 @@ export default function App() {
       setSimulationResult(result);
       
       // Log agent action
-      await fetch('/api/agent-logs', {
+      await fetch(API.agentLogs, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -541,10 +554,55 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
+              {/* Decision log table (Replit-style: status badges + table layout) */}
+              <div className="glass-card overflow-hidden border-none shadow-xl shadow-gray-200/50">
+                <div className="p-8 border-b border-gray-50">
+                  <h3 className="font-display font-bold text-xl tracking-tight">Decision log</h3>
+                  <p className="text-gray-500 text-sm mt-1 font-light">Track strategic decisions and their status.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  {decisions.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400 text-sm font-light">No decisions recorded yet. Run a simulation or add a decision to see them here.</div>
+                  ) : (
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50/30">
+                          <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em]">Decision</th>
+                          <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em]">Expected impact</th>
+                          <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em]">Status</th>
+                          <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] text-right">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {decisions.map((d) => (
+                          <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-8 py-5 text-sm font-medium">{d.decision_text}</td>
+                            <td className="px-8 py-5 text-sm text-gray-500">{d.expected_outcome ?? '—'}</td>
+                            <td className="px-8 py-5">
+                              <span className={cn(
+                                "inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest",
+                                d.status === 'implemented' && "bg-emerald-50 text-emerald-600",
+                                d.status === 'pending' && "bg-amber-50 text-amber-600",
+                                d.status === 'rejected' && "bg-rose-50 text-rose-600",
+                                !['implemented', 'pending', 'rejected'].includes(d.status) && "bg-gray-100 text-gray-600"
+                              )}>
+                                {d.status || 'pending'}
+                              </span>
+                            </td>
+                            <td className="px-8 py-5 text-sm text-gray-500 text-right">{new Date(d.timestamp).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
               <div className="glass-card p-10">
                 <h3 className="font-display font-bold text-2xl mb-10 tracking-tight">Decision intelligence log</h3>
+                <p className="text-gray-500 text-sm -mt-6 mb-6 font-light">Simulations run by the forecasting agent.</p>
                 <div className="space-y-4">
-                  {agentLogs.filter(l => l.action === 'Decision Simulation').map((log: any, i: number) => (
+                  {agentLogs.filter((l: any) => l.action === 'Decision Simulation').map((log: any, i: number) => (
                     <div key={i} className="p-6 border border-gray-50 rounded-3xl hover:bg-gray-50 transition-all group">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">

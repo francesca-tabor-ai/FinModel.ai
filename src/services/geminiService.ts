@@ -3,6 +3,8 @@
  * All Gemini calls are made on the server to keep the API key secure.
  */
 
+import { API } from "../lib/api";
+
 export interface FinancialMetric {
   month: string;
   revenue: number;
@@ -26,7 +28,7 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
 export const geminiService = {
   async generateInsights(data: FinancialMetric[]) {
     return apiPost<{ insights: string[]; recommendations: { title: string; description: string }[] }>(
-      "/api/insights",
+      API.insights,
       data
     );
   },
@@ -36,6 +38,6 @@ export const geminiService = {
       summary: string;
       impacts: { runway: string; revenue: string; profitability: string };
       simulations?: { scenario: string; runway_impact: number; revenue_impact: number }[];
-    }>("/api/simulate", { decision, financials: currentData });
+    }>(API.simulate, { decision, financials: currentData });
   },
 };

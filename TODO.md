@@ -12,10 +12,10 @@
 
 | Item | In codebase today |
 |------|--------------------|
-| **Database** | SQLite: `financial_data`, `decisions`, `agent_logs`. No separate tables yet for models, agents, or integrations. |
+| **Database** | SQLite: `financial_data`, `decisions`, `agent_logs`, `models`, `agents`, `integrations`. Agents seeded (Financial analyst, CFO, Forecasting). GET/POST for models, agents, integrations. |
 | **Backend** | Express REST API (`/api/financials`, `/api/decisions`, `/api/agent-logs`, `/api/insights`, `/api/simulate`). tRPC not added. |
-| **Auth** | None. No login, sessions, or user management. |
-| **Real-time** | None. No WebSockets or live sync; clients poll/refetch. |
+| **Auth** | Session-based auth: users table, POST /api/login, /api/logout, GET /api/me; seeded demo@finmodel.ai / demo123. No protected routes yet; no login UI. |
+| **Real-time** | SSE endpoint GET /api/events; broadcast on decisions and agent_logs mutations. Clients can subscribe and refetch on "refresh" event. |
 
 To align the app with the checklist above, next steps could be: extend schema (models/agents/integrations tables), introduce tRPC (or keep REST), add auth (e.g. sessions or OAuth), and add a real-time layer (e.g. WebSockets or SSE).
 

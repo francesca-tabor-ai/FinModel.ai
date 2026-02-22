@@ -39,6 +39,7 @@ FinModel.ai/
 | `PORT` | No | Server port (default `3000`). |
 | `NODE_ENV` | No | `production` for serving `dist/`; else Vite dev. |
 | `DATABASE_PATH` | No | SQLite file path (default `finmodel.db`). |
+| `SESSION_SECRET` | No | Secret for signing session cookies (default dev value; set in production). |
 
 Load from `.env` or `.env.local` (via `dotenv` in `server.ts`). Never commit `.env` (see `.gitignore`).
 
@@ -52,19 +53,23 @@ Load from `.env` or `.env.local` (via `dotenv` in `server.ts`). Never commit `.e
 
 ## Database
 
-SQLite with three tables:
+SQLite with tables:
 
 - **financial_data** – monthly revenue, expenses, cash_on_hand (and optional category).
 - **decisions** – decision_text, context, expected_outcome, status.
 - **agent_logs** – agent_name, action, recommendation, impact_score, timestamp.
+- **models** – name, version, config (saved models).
+- **agents** – name, type, status (seeded: Financial analyst, CFO agent, Forecasting agent).
+- **integrations** – provider, type, status, config, last_sync_at.
+- **users** – email, password_hash (seeded: demo@finmodel.ai / demo123).
 
-Seed data is inserted when `financial_data` is empty. DB file: `finmodel.db` (or `DATABASE_PATH`).
+Seed data is inserted when tables are empty. DB file: `finmodel.db` (or `DATABASE_PATH`).
 
 ## Security
 
 - `GEMINI_API_KEY` is read only in Node (`server/gemini.ts`); never in Vite or client bundle.
 - POST bodies are validated (required fields, types); errors return 400/500 with JSON.
-- No auth layer yet; suitable for single-tenant or internal use.
+- **Auth:** session-based login (POST /api/login, GET /api/me, POST /api/logout). Sessions signed with `SESSION_SECRET`; set a strong secret in production. Demo user: demo@finmodel.ai / demo123. API routes are not yet protected by auth.
 
 ## See also
 

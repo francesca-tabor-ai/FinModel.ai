@@ -164,6 +164,75 @@ Run a decision simulation (outcome prediction). Uses server-side Gemini (`GEMINI
 
 ---
 
+## GET /api/models
+
+Returns all model records, newest first.
+
+**Response:** `200`  
+**Body:** array of objects with `id`, `name`, `version`, `config`, `created_at`, `updated_at`.
+
+---
+
+## POST /api/models
+
+Create a model record. **Body:** `{ "name": string, "version"?: string, "config"?: string }`. **Response:** `201` `{ "id": number }`. **Errors:** `400` if `name` missing.
+
+---
+
+## GET /api/agents
+
+Returns all agents, ordered by name. Seeded by default: Financial analyst, CFO agent, Forecasting agent.
+
+**Response:** `200`  
+**Body:** array of objects with `id`, `name`, `type`, `config`, `status`, `created_at`, `updated_at`.
+
+---
+
+## POST /api/agents
+
+Create an agent. **Body:** `{ "name": string, "type": string, "config"?: string, "status"?: string }`. **Response:** `201` `{ "id": number }`. **Errors:** `400` if `name` or `type` missing.
+
+---
+
+## GET /api/integrations
+
+Returns all integrations, ordered by provider.
+
+**Response:** `200`  
+**Body:** array of objects with `id`, `provider`, `type`, `status`, `config`, `last_sync_at`, `created_at`, `updated_at`.
+
+---
+
+## POST /api/integrations
+
+Create an integration. **Body:** `{ "provider": string, "type": string, "config"?: string, "status"?: string }`. **Response:** `201` `{ "id": number }`. **Errors:** `400` if `provider` or `type` missing.
+
+---
+
+## GET /api/me
+
+Returns current user if session cookie is valid. **Response:** `200` `{ "id": number, "email": string }`. **Errors:** `401` if not logged in.
+
+---
+
+## POST /api/login
+
+Login. **Body:** `{ "email": string, "password": string }`. Sets session cookie and returns `{ "user": { "id", "email" } }`. Seeded demo: `demo@finmodel.ai` / `demo123`. **Errors:** `400` if body invalid; `401` if credentials invalid.
+
+---
+
+## POST /api/logout
+
+Clears session cookie. **Response:** `200` `{ "ok": true }`.
+
+---
+
+## GET /api/events
+
+Server-Sent Events (SSE). Subscribe for real-time refresh: server sends `refresh` event when decisions or agent_logs change. Client can call `new EventSource("/api/events")` and refetch data on `refresh`.
+
+---
+
 ## Static and SPA fallback
 
 - In development, Vite serves the frontend and assets.
