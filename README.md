@@ -41,3 +41,10 @@ View your app in AI Studio: https://ai.studio/apps/1321f7cf-886f-4329-b855-6a8ea
 3. Start the server: `npm run start`
 
 The server serves the built app from `dist/` and runs the API (including Gemini) server-side so your API key is never exposed to the browser.
+
+## Documentation
+
+- [Project docs](docs/README.md) — structure, environment, database, security
+- [User guide](docs/USER_GUIDE.md) — how to use the app (Dashboard, Model, Simulations, Agents, Decision log)
+- [API reference](docs/API.md) — REST endpoints and payloads
+- [Release process](docs/RELEASE.md) — checkpoints and tagging

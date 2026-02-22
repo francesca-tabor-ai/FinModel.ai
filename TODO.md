@@ -244,3 +244,18 @@ To align the app with the checklist above, next steps could be: extend schema (m
 | **E2E tests** | Not implemented; no Playwright/Cypress or user-journey tests. |
 | **Performance** | Vite build; no profiling or optimization. Chunk size warning for bundle &gt;500 kB. |
 | **Security review** | API key kept server-side; input validation on POST routes. No formal security review or penetration testing. |
+
+---
+
+## Deployment & Delivery (Phase 8)
+- [x] Final checkpoint creation
+- [x] Documentation
+- [x] User guide
+- [x] API documentation
+
+| Item | In codebase today |
+|------|--------------------|
+| **Final checkpoint creation** | package.json version 1.0.0, name finmodel-ai; CHANGELOG.md and docs/RELEASE.md with checkpoint/release steps. |
+| **Documentation** | docs/README.md (structure, env, security); README (product + run/production); CHANGELOG; RELEASE process. |
+| **User guide** | docs/USER_GUIDE.md: Dashboard, Financial model, Simulations, AI agents, Decision log, Settings, troubleshooting. |
+| **API documentation** | docs/API.md: all REST endpoints, request/response shapes, error codes. |
